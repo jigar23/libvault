@@ -144,11 +144,23 @@ TEST_CASE("Transit Functions") {
     auto response = transit.readKey(path);
 
     if (response) {
-      std::cout << response.value() << std::endl;
       auto data = nlohmann::json::parse(response.value())["data"];
 
       CHECK(data["name"] == "mykey");
       CHECK(data["type"] == "aes256-gcm96");
+    } else {
+      CHECK(false);
+    }
+  }
+
+  SECTION("List Keys") {
+    auto response = transit.listKeys();
+
+    if (response) {
+      auto keys = nlohmann::json::parse(response.value())["data"]["keys"];
+
+      CHECK(keys[0] == "mykey");
+      CHECK(keys[1] == "signkey");
     } else {
       CHECK(false);
     }

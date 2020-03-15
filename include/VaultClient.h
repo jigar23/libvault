@@ -316,6 +316,7 @@ namespace Vault {
     std::optional<std::string> sign(const Path &key, const Algorithm &algorithm, const Parameters &Parameters);
     std::optional<std::string> verify(const Path &key, const Algorithm &algorithm, const Parameters &Parameters);
     std::optional<std::string> readKey(const Path& path);
+    std::optional<std::string> listKeys();
 
   private:
     Url getUrl(const Path &path);
