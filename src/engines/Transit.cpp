@@ -110,3 +110,7 @@ std::optional<std::string> Vault::Transit::readKey(const Path& path) {
 std::optional<std::string> Vault::Transit::listKeys() {
   return Vault::HttpConsumer::list(client_, getUrl(Vault::Path{"keys"}));
 }
+
+std::optional<std::string> Vault::Transit::backupKey(const Path &path) {
+  return Vault::HttpConsumer::get(client_, getUrl(Vault::Path{"backup/" + path}));
+}
