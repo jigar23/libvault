@@ -3,20 +3,18 @@
 #include "VaultClient.h"
 #include "TestHelpers.h"
 
-TEST_CASE("Transit Functions")
-{
+TEST_CASE("Transit Functions") {
   Vault::Client vaultClient = TestHelpers::AppRole::login();
   Vault::Transit transit(vaultClient);
   Vault::Path path("mykey");
 
-  SECTION("Encrypt/Decrypt Round Trip")
-  {
-    Vault::Parameters plaintext({ {"plaintext", Vault::Base64::encode("Attack at dawn")} });
+  SECTION("Encrypt/Decrypt Round Trip") {
+    Vault::Parameters plaintext({{"plaintext", Vault::Base64::encode("Attack at dawn")}});
     auto encryptResponse = transit.encrypt(path, plaintext);
 
     if (encryptResponse) {
       std::string ciphertextString = nlohmann::json::parse(encryptResponse.value())["data"]["ciphertext"];
-      Vault::Parameters ciphertext({ {"ciphertext", ciphertextString} });
+      Vault::Parameters ciphertext({{"ciphertext", ciphertextString}});
       auto decryptResponse = transit.decrypt(path, ciphertext);
 
       if (decryptResponse) {
@@ -41,8 +39,7 @@ TEST_CASE("Transit Functions")
     }
   }
 
-  SECTION("Generate Wrapped Data Key")
-  {
+  SECTION("Generate Wrapped Data Key") {
     auto response = transit.generate_wrapped_data_key(path, {{}});
 
     if (response) {
@@ -54,9 +51,8 @@ TEST_CASE("Transit Functions")
     }
   }
 
-  SECTION("Random base64 bytes")
-  {
-    Vault::Parameters parameters({ {"format","base64"} });
+  SECTION("Random base64 bytes") {
+    Vault::Parameters parameters({{"format", "base64"}});
     auto response = transit.generate_random_bytes(32, parameters);
 
     if (response) {
@@ -68,9 +64,8 @@ TEST_CASE("Transit Functions")
     }
   }
 
-  SECTION("Random hex bytes")
-  {
-    Vault::Parameters parameters({ {"format","hex"} });
+  SECTION("Random hex bytes") {
+    Vault::Parameters parameters({{"format", "hex"}});
     auto response = transit.generate_random_bytes(32, parameters);
 
     if (response) {
@@ -84,7 +79,8 @@ TEST_CASE("Transit Functions")
 
   SECTION("Hash base64") {
     auto input = Vault::Base64::encode("Attack at dawn");
-    Vault::Parameters parameters({ {"format","base64"}, {"input", input} });
+    Vault::Parameters parameters({{"format", "base64"},
+                                  {"input",  input}});
 
     auto sha224 = transit.hash(Vault::Algorithms::SHA2_224, parameters);
     auto sha256 = transit.hash(Vault::Algorithms::SHA2_256, parameters);
@@ -97,10 +93,10 @@ TEST_CASE("Transit Functions")
     TestHelpers::Transit::assertHashPopulated(sha512);
   }
 
-  SECTION("Hash hex")
-  {
+  SECTION("Hash hex") {
     auto input = Vault::Base64::encode("Attack at dawn");
-    Vault::Parameters parameters({ {"format","hex"}, {"input", input} });
+    Vault::Parameters parameters({{"format", "hex"},
+                                  {"input",  input}});
 
     auto sha224 = transit.hash(Vault::Algorithms::SHA2_224, parameters);
     auto sha256 = transit.hash(Vault::Algorithms::SHA2_256, parameters);
@@ -113,9 +109,8 @@ TEST_CASE("Transit Functions")
     TestHelpers::Transit::assertHashPopulated(sha512);
   }
 
-  SECTION("HMac")
-  {
-    Vault::Parameters parameters({ {"input", Vault::Base64::encode("Attack at dawn")} });
+  SECTION("HMac") {
+    Vault::Parameters parameters({{"input", Vault::Base64::encode("Attack at dawn")}});
 
     auto sha224 = transit.hmac(path, Vault::Algorithms::SHA2_224, parameters);
     auto sha256 = transit.hmac(path, Vault::Algorithms::SHA2_256, parameters);
@@ -128,10 +123,9 @@ TEST_CASE("Transit Functions")
     TestHelpers::Transit::assertHmacPopulated(sha512);
   }
 
-  SECTION("Sign")
-  {
+  SECTION("Sign") {
     Vault::Path signkey("signkey");
-    Vault::Parameters parameters({ {"input", Vault::Base64::encode("Attack at dawn")} });
+    Vault::Parameters parameters({{"input", Vault::Base64::encode("Attack at dawn")}});
 
     auto sha1 = transit.sign(signkey, Vault::Algorithms::SHA1, parameters);
     auto sha224 = transit.sign(signkey, Vault::Algorithms::SHA2_224, parameters);
@@ -144,5 +138,19 @@ TEST_CASE("Transit Functions")
     TestHelpers::Transit::assertSignaturePopulated(sha256);
     TestHelpers::Transit::assertSignaturePopulated(sha384);
     TestHelpers::Transit::assertSignaturePopulated(sha512);
+  }
+
+  SECTION("Read Key") {
+    auto response = transit.readKey(path);
+
+    if (response) {
+      std::cout << response.value() << std::endl;
+      auto data = nlohmann::json::parse(response.value())["data"];
+
+      CHECK(data["name"] == "mykey");
+      CHECK(data["type"] == "aes256-gcm96");
+    } else {
+      CHECK(false);
+    }
   }
 }

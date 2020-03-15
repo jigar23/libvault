@@ -102,3 +102,7 @@ Vault::Transit::verify(const Vault::Path& key,
     parameters
   );
 }
+
+std::optional<std::string> Vault::Transit::readKey(const Path& path) {
+  return Vault::HttpConsumer::get(client_, getUrl(Vault::Path{"keys/" + path}));
+}
